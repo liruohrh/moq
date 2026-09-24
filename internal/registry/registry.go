@@ -1,11 +1,9 @@
 package registry
 
 import (
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/types"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -16,47 +14,96 @@ import (
 // destination package. For the mock package, it tracks the list of
 // imports and ensures there are no conflicts in the imported package
 // qualifiers.
+//
+// A single Registry may hold several source packages so that mocks for
+// interfaces declared in more than one package can be generated into a
+// single output package.
 type Registry struct {
-	srcPkgName  string
-	srcPkgTypes *types.Package
-	moqPkgPath  string
-	aliases     map[string]string
-	imports     map[string]*Package
+	moqPkgPath string
+	aliases    map[string]string
+	imports    map[string]*Package
+	sources    map[string]*Source
 }
 
-// New loads the source package info and returns a new instance of
-// Registry.
-func New(srcDir, moqPkg string) (*Registry, error) {
-	srcPkg, err := pkgInfoFromPath(
-		srcDir, packages.NeedName|packages.NeedSyntax|packages.NeedTypes,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't load source package: %s", err)
+// Source is a package from which interfaces are mocked.
+type Source struct {
+	name string
+	path string
+	pkg  *types.Package
+}
+
+// Name returns the name of the source package.
+func (s Source) Name() string { return s.name }
+
+// Path is the full package import path (without vendor).
+func (s Source) Path() string { return s.path }
+
+// Types returns the types information for the source package.
+func (s Source) Types() *types.Package { return s.pkg }
+
+// New returns a new instance of Registry which will generate mocks for
+// the package with the given import path. moqPkgPath may be empty when
+// the destination package is not known.
+func New(moqPkgPath string) *Registry {
+	return &Registry{
+		moqPkgPath: stripVendorPath(moqPkgPath),
+		aliases:    make(map[string]string),
+		imports:    make(map[string]*Package),
+		sources:    make(map[string]*Source),
+	}
+}
+
+// MoqPkgPath returns the import path of the package which will contain
+// the generated mocks. It may be empty.
+func (r Registry) MoqPkgPath() string { return r.moqPkgPath }
+
+// SetMoqPkgPath sets the import path of the package which will contain
+// the generated mocks.
+func (r *Registry) SetMoqPkgPath(path string) { r.moqPkgPath = stripVendorPath(path) }
+
+// AddSource registers a loaded source package. It is safe to register
+// the same package more than once; the existing Source is returned.
+func (r *Registry) AddSource(pkg *packages.Package) *Source {
+	path := stripVendorPath(pkg.PkgPath)
+	if src, ok := r.sources[path]; ok {
+		return src
 	}
 
-	return &Registry{
-		srcPkgName:  srcPkg.Name,
-		srcPkgTypes: srcPkg.Types,
-		moqPkgPath:  findPkgPath(moqPkg, srcPkg.PkgPath),
-		aliases:     parseImportsAliases(srcPkg.Syntax),
-		imports:     make(map[string]*Package),
-	}, nil
+	src := &Source{name: pkg.Name, path: path, pkg: pkg.Types}
+	r.sources[path] = src
+
+	// Aliases declared by the source files are reused in the generated
+	// code. When multiple source packages alias the same import
+	// differently, the first one seen wins.
+	for importPath, alias := range parseImportsAliases(pkg.Syntax) {
+		if _, ok := r.aliases[importPath]; !ok {
+			r.aliases[importPath] = alias
+		}
+	}
+
+	return src
 }
 
-// SrcPkg returns the types info for the source package.
-func (r Registry) SrcPkg() *types.Package {
-	return r.srcPkgTypes
-}
-
-// SrcPkgName returns the name of the source package.
-func (r Registry) SrcPkgName() string {
-	return r.srcPkgName
+// Sources returns the registered source packages sorted by import path.
+func (r Registry) Sources() []*Source {
+	sources := make([]*Source, 0, len(r.sources))
+	for _, src := range r.sources {
+		sources = append(sources, src)
+	}
+	sort.Slice(sources, func(i, j int) bool {
+		return sources[i].path < sources[j].path
+	})
+	return sources
 }
 
 // LookupInterface returns the underlying interface definition of the
-// given interface name.
-func (r Registry) LookupInterface(name string) (*types.Interface, *types.TypeParamList, error) {
-	obj := r.SrcPkg().Scope().Lookup(name)
+// given interface name in the provided source package.
+func (r Registry) LookupInterface(src *Source, name string) (*types.Interface, *types.TypeParamList, error) {
+	if src == nil || src.pkg == nil {
+		return nil, nil, fmt.Errorf("source package not loaded")
+	}
+
+	obj := src.pkg.Scope().Lookup(name)
 	if obj == nil {
 		return nil, nil, fmt.Errorf("interface not found: %s", name)
 	}
@@ -106,6 +153,12 @@ func (r *Registry) AddImport(pkg *types.Package) *Package {
 	return &imprt
 }
 
+// Imported returns the already registered import for the given package
+// path, or nil if it has not been imported.
+func (r Registry) Imported(path string) *Package {
+	return r.imports[stripVendorPath(path)]
+}
+
 // Imports returns the list of imported packages. The list is sorted by
 // path.
 func (r Registry) Imports() []*Package {
@@ -151,51 +204,6 @@ func (r Registry) resolveImportConflict(a, b *Package, lvl int) {
 
 		p.Alias = name
 	}
-}
-
-func pkgInfoFromPath(srcDir string, mode packages.LoadMode) (*packages.Package, error) {
-	pkgs, err := packages.Load(&packages.Config{
-		Mode: mode,
-		Dir:  srcDir,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if len(pkgs) == 0 {
-		return nil, errors.New("package not found")
-	}
-	if len(pkgs) > 1 {
-		return nil, errors.New("found more than one package")
-	}
-	if errs := pkgs[0].Errors; len(errs) != 0 {
-		if len(errs) == 1 {
-			return nil, errs[0]
-		}
-		return nil, fmt.Errorf("%s (and %d more errors)", errs[0], len(errs)-1)
-	}
-	return pkgs[0], nil
-}
-
-func findPkgPath(pkgInputVal string, srcPkgPath string) string {
-	if pkgInputVal == "" {
-		return srcPkgPath
-	}
-	if pkgInDir(srcPkgPath, pkgInputVal) {
-		return srcPkgPath
-	}
-	subdirectoryPath := filepath.Join(srcPkgPath, pkgInputVal)
-	if pkgInDir(subdirectoryPath, pkgInputVal) {
-		return subdirectoryPath
-	}
-	return ""
-}
-
-func pkgInDir(pkgName, dir string) bool {
-	currentPkg, err := pkgInfoFromPath(dir, packages.NeedName)
-	if err != nil {
-		return false
-	}
-	return currentPkg.Name == pkgName || currentPkg.Name+"_test" == pkgName
 }
 
 func parseImportsAliases(syntaxTree []*ast.File) map[string]string {

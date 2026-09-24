@@ -10,13 +10,12 @@ import (
 
 // Data is the template data used to render the Moq template.
 type Data struct {
-	PkgName         string
-	SrcPkgQualifier string
-	Imports         []*registry.Package
-	Mocks           []MockData
-	StubImpl        bool
-	SkipEnsure      bool
-	WithResets      bool
+	PkgName    string
+	Imports    []*registry.Package
+	Mocks      []MockData
+	StubImpl   bool
+	SkipEnsure bool
+	WithResets bool
 }
 
 // MocksSomeMethod returns true of any one of the Mocks has at least 1
@@ -35,8 +34,13 @@ func (d Data) MocksSomeMethod() bool {
 type MockData struct {
 	InterfaceName string
 	MockName      string
-	TypeParams    []TypeParamData
-	Methods       []MethodData
+	// SrcPkgQualifier is the qualifier (including the trailing dot) which
+	// must be used to refer to the source package of the interface, or an
+	// empty string when the mock is generated in the source package
+	// itself.
+	SrcPkgQualifier string
+	TypeParams      []TypeParamData
+	Methods         []MethodData
 }
 
 // MethodData is the data which represents a method on some interface.

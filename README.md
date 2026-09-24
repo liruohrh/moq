@@ -28,6 +28,7 @@ older Go versions, use the pre-built binaries published with
 
 ```
 moq [flags] source-dir interface [interface2 [interface3 [...]]]
+moq [flags] -source <source>:<interface>[:alias][,<interface>...] [-source ...]
   -fmt string
     	go pretty-printer: gofmt, goimports or noop (default gofmt)
   -out string
@@ -38,6 +39,8 @@ moq [flags] source-dir interface [interface2 [interface3 [...]]]
     	first remove output file, if it exists
   -skip-ensure
     	suppress mock implementation check, avoid import cycle if mocks generated outside of the tested package
+  -source value
+    	source package and interfaces to mock, repeatable, format: <dir-or-import-path>:<interface>[:alias][,<interface>...]
   -stub
     	return zero values when no mock implementation is provided, do not panic
   -version
@@ -73,6 +76,34 @@ type MyInterface interface {
 ```
 
 Then run `go generate` for your package.
+
+### Multiple sources and dependencies
+
+More than one source package can be mocked into a single output file by
+repeating the `-source` flag. Every occurrence describes one group: a source
+package together with the interfaces to mock from it:
+
+```
+$ moq -out mocks.go -pkg mocks \
+    -source ./internal/store:Store,Reader \
+    -source github.com/your/dependency/cache:Cache:CacheMock
+```
+
+The source of a group may either be a directory path or the import path of a Go
+package. A source given as an import path is resolved using the module and
+workspace of the directory that `-out` points into, so `replace` directives and
+`go.work` workspaces are honored. Such a dependency is referenced in the
+generated code by its package import path, never by the directory it lives in.
+Sources which are the output package itself are used without an import.
+
+When `-source` is used, no positional arguments may be given. The original
+single-source form, where a source directory is followed by one or more
+interface names, keeps working as before:
+
+```
+$ moq -out mocks_test.go . MyInterface OtherInterface
+```
+
 
 ### How to use it
 

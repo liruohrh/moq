@@ -46,9 +46,9 @@ import (
 {{range $i, $mock := .Mocks -}}
 
 {{- if not $.SkipEnsure -}}
-// Ensure, that {{.MockName}} does implement {{$.SrcPkgQualifier}}{{.InterfaceName}}.
+// Ensure, that {{.MockName}} does implement {{$mock.SrcPkgQualifier}}{{.InterfaceName}}.
 // If this is not the case, regenerate this file with moq.
-var _ {{$.SrcPkgQualifier}}{{.InterfaceName -}}
+var _ {{$mock.SrcPkgQualifier}}{{.InterfaceName -}}
 	{{- if .TypeParams }}[
 		{{- range $index, $param := .TypeParams}}
 			{{- if $index}}, {{end -}}
@@ -66,11 +66,11 @@ var _ {{$.SrcPkgQualifier}}{{.InterfaceName -}}
 {}
 {{- end}}
 
-// {{.MockName}} is a mock implementation of {{$.SrcPkgQualifier}}{{.InterfaceName}}.
+// {{.MockName}} is a mock implementation of {{$mock.SrcPkgQualifier}}{{.InterfaceName}}.
 //
 //	func TestSomethingThatUses{{.InterfaceName}}(t *testing.T) {
 //
-//		// make and configure a mocked {{$.SrcPkgQualifier}}{{.InterfaceName}}
+//		// make and configure a mocked {{$mock.SrcPkgQualifier}}{{.InterfaceName}}
 //		mocked{{.InterfaceName}} := &{{.MockName}}{
 			{{- range .Methods}}
 //			{{.Name}}Func: func({{.ArgList}}) {{.ReturnArgTypeList}} {
@@ -79,7 +79,7 @@ var _ {{$.SrcPkgQualifier}}{{.InterfaceName -}}
 			{{- end}}
 //		}
 //
-//		// use mocked{{.InterfaceName}} in code that requires {{$.SrcPkgQualifier}}{{.InterfaceName}}
+//		// use mocked{{.InterfaceName}} in code that requires {{$mock.SrcPkgQualifier}}{{.InterfaceName}}
 //		// and then make assertions.
 //
 //	}
