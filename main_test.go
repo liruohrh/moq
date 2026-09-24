@@ -33,8 +33,8 @@ func TestParseSource(t *testing.T) {
 		},
 		{
 			name:       "ImportPath",
-			value:      "github.com/matryer/moq:Baz",
-			wantSource: "github.com/matryer/moq",
+			value:      "github.com/liruohrh/moq:Baz",
+			wantSource: "github.com/liruohrh/moq",
 			wantIfaces: []string{"Baz"},
 		},
 		{

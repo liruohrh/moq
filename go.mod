@@ -1,4 +1,4 @@
-module github.com/matryer/moq
+module github.com/liruohrh/moq
 
 go 1.23
 

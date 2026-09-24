@@ -41,8 +41,8 @@ func TestMockMultipleSources(t *testing.T) {
 
 	strs := []string{
 		"package mocks",
-		`"github.com/matryer/moq/pkg/moq/testpackages/multisrc/cache"`,
-		`"github.com/matryer/moq/pkg/moq/testpackages/multisrc/store"`,
+		`"github.com/liruohrh/moq/pkg/moq/testpackages/multisrc/cache"`,
+		`"github.com/liruohrh/moq/pkg/moq/testpackages/multisrc/store"`,
 		"var _ cache.Cache = &CacheMock{}",
 		"var _ store.Store = &StoreMock{}",
 		"SaveFunc func(ctx context.Context, item *store.Item) error",
@@ -126,8 +126,8 @@ func TestMockMultipleSourcesSamePackageName(t *testing.T) {
 	s := buf.String()
 	for _, str := range []string{
 		"package mocks",
-		`one "github.com/matryer/moq/pkg/moq/testpackages/multisrc/one"`,
-		`two "github.com/matryer/moq/pkg/moq/testpackages/multisrc/two"`,
+		`one "github.com/liruohrh/moq/pkg/moq/testpackages/multisrc/one"`,
+		`two "github.com/liruohrh/moq/pkg/moq/testpackages/multisrc/two"`,
 		"var _ one.First = &FirstMock{}",
 		"var _ two.Second = &SecondMock{}",
 	} {
@@ -158,7 +158,7 @@ func TestMockExternalTestPackage(t *testing.T) {
 	s := buf.String()
 	for _, str := range []string{
 		"package example_test",
-		`"github.com/matryer/moq/pkg/moq/testpackages/example"`,
+		`"github.com/liruohrh/moq/pkg/moq/testpackages/example"`,
 		"var _ example.PersonStore = &PersonStoreMock{}",
 		"GetFunc func(ctx context.Context, id string) (*example.Person, error)",
 	} {

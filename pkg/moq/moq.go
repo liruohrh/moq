@@ -10,8 +10,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/matryer/moq/internal/registry"
-	"github.com/matryer/moq/internal/template"
+	"github.com/liruohrh/moq/internal/registry"
+	"github.com/liruohrh/moq/internal/template"
 )
 
 // Mocker can generate mock structs.

@@ -1,7 +1,7 @@
 package transientimport
 
 import (
-	"github.com/matryer/moq/pkg/moq/testpackages/transientimport/base"
+	"github.com/liruohrh/moq/pkg/moq/testpackages/transientimport/base"
 )
 
 // Transient is a test interface.

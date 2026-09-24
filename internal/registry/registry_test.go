@@ -3,7 +3,7 @@ package registry_test
 import (
 	"testing"
 
-	"github.com/matryer/moq/internal/registry"
+	"github.com/liruohrh/moq/internal/registry"
 )
 
 func BenchmarkLoadSource(b *testing.B) {

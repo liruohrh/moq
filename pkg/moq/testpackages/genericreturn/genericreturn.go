@@ -1,6 +1,6 @@
 package genericreturn
 
-import "github.com/matryer/moq/pkg/moq/testpackages/genericreturn/otherpackage"
+import "github.com/liruohrh/moq/pkg/moq/testpackages/genericreturn/otherpackage"
 
 // GenericBar is a test type.
 type GenericBar[T any] struct {

@@ -1,6 +1,6 @@
 package typealiastwo
 
-import "github.com/matryer/moq/pkg/moq/testpackages/typealiastwo/internal/typealiasinternal"
+import "github.com/liruohrh/moq/pkg/moq/testpackages/typealiastwo/internal/typealiasinternal"
 
 type AliasType = typealiasinternal.MyInternalType
 

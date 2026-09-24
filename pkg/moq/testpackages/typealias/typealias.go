@@ -1,7 +1,7 @@
 package typealias
 
 import (
-	"github.com/matryer/moq/pkg/moq/testpackages/typealiastwo"
+	"github.com/liruohrh/moq/pkg/moq/testpackages/typealiastwo"
 )
 
 type Example interface {

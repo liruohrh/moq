@@ -3,7 +3,7 @@ package syncimport
 import (
 	stdsync "sync"
 
-	"github.com/matryer/moq/pkg/moq/testpackages/syncimport/sync"
+	"github.com/liruohrh/moq/pkg/moq/testpackages/syncimport/sync"
 )
 
 // Syncer is a test interface.

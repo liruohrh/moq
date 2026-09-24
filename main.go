@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/matryer/moq/pkg/moq"
+	"github.com/liruohrh/moq/pkg/moq"
 )
 
 // Version is the command version, injected at build time.

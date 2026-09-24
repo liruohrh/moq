@@ -1,7 +1,7 @@
 package shadowtypes
 
 import (
-	"github.com/matryer/moq/pkg/moq/testpackages/shadowtypes/types"
+	"github.com/liruohrh/moq/pkg/moq/testpackages/shadowtypes/types"
 )
 
 // ShadowTypes is a test interface.
